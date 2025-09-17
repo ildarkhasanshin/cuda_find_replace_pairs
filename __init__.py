@@ -5,7 +5,7 @@ import cudatext_cmd as cmds
 import json
 
 from cudax_lib import get_translation
-_ = get_translation(__file__) # I18N
+_ = get_translation(__file__)
 
 JSON_FN = os.path.join(app_path(APP_DIR_SETTINGS), 'cuda_find_replace_pairs.json')
 
@@ -19,20 +19,22 @@ class Command:
             if res is not None:
                 self.set_fr(items_[res])
         else:
-            msg_status(_('No pairs found'))
+            msg_box(_('No pairs found'), MB_OK)
 
     def add(self):
         f_, r_, rg_ = self.get_fr()
-        if f_ and r_:
-            res_ = msg_box(_('Do you really want to add pair of of Find/Replace?'), MB_YESNO + MB_ICONQUESTION)
-            if res_ == ID_YES:
-                self.save_json({
-                    'find': f_,
-                    'replace': r_,
-                    'regex': rg_,
-                })
-        else:
-            msg_box(_('Please fill pair of Find/Replace'), MB_OK)
+        data = self.load_json()
+        found = False
+        for dat in data:
+            if f_ == dat['find'] and r_ == dat['replace'] and rg_ == dat['regex']:
+                found = True
+                break
+        if not found:
+            self.save_json({
+                'find': f_,
+                'replace': r_,
+                'regex': rg_,
+            })
 
     def remove(self):
         items, items_ = self.get_items()
@@ -46,7 +48,7 @@ class Command:
                     data.pop(res)
                     self.save_json(data, True)
         else:
-            msg_status(_('No pairs found'))
+            msg_box(_('No pairs found'), MB_OK)
 
     def load_json(self):
         data = ''
@@ -89,10 +91,10 @@ class Command:
                 j = json.loads(json.dumps(i))
                 items_.append(j)
                 if j['regex']:
-                    items += '(.*) '
-                items += j['find'] + ' => ' + j['replace'] + "\n"
+                    items += '(*) '
+                items += '[' + j['find'] + '] => [' + j['replace'] + ']' + "\n"
         else:
-            msg_box(_('No pairs found'), MB_OK)
+            msg_status(_('No pairs found'))
 
         return items, items_
 
@@ -111,4 +113,12 @@ class Command:
             find_d = vals['find'],
             rep_d = vals['replace'],
             op_regex_d = vals['regex'],
+            focus = 'edFind'
         ))
+
+    def on_state_findbar(self, ed_self, state, value):
+        match state:
+            case 'cmd':
+                match value:
+                    case 'Rep' | 'RepAll' | 'RepStop' | 'RepGlobal':
+                        self.add()

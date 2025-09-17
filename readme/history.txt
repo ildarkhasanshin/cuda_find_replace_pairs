@@ -1,2 +1,6 @@
 2025.09.04
 initial
+
+2025.09.17
+[+] auto-add unique pairs of find-replace in plugin's db
+[*] small fixes
