@@ -7,9 +7,11 @@ import json
 from cudax_lib import get_translation
 _ = get_translation(__file__)
 
-JSON_FN = os.path.join(app_path(APP_DIR_SETTINGS), 'cuda_find_replace_pairs.json')
-
 class Command:
+
+    def __init__(self):
+        global json_fn
+        json_fn = os.path.join(app_path(APP_DIR_SETTINGS), 'cuda_find_replace_pairs.json')
 
     def list(self):
         items, items_ = self.get_items()
@@ -52,8 +54,8 @@ class Command:
 
     def load_json(self):
         data = ''
-        if os.path.exists(JSON_FN):
-            with open(JSON_FN, encoding = 'utf-8') as f:
+        if os.path.exists(json_fn):
+            with open(json_fn, encoding = 'utf-8') as f:
                 data = json.load(f)
 
         return data
@@ -67,7 +69,7 @@ class Command:
                 data.append(json_data)
             else:
                 data = [json_data]
-        with open(JSON_FN, mode = 'w', encoding = 'utf-8') as f:
+        with open(json_fn, mode = 'w', encoding = 'utf-8') as f:
             json.dump(data, f, indent = 2)
 
         msg_status(_('Pairs of Find/Replace updated'))
@@ -98,6 +100,12 @@ class Command:
 
         return items, items_
 
+    def get_fr_prop(self, prop):
+        return app_proc(PROC_GET_FINDER_PROP, '').get(prop, [])
+
+    def set_fr_prop(self, prop, val):
+        return app_proc(PROC_SET_FINDER_PROP, {prop: val})
+
     def get_fr(self):
         ed.cmd(cmds.cmd_DialogReplace)
         fr_ = app_proc(PROC_GET_FINDER_PROP, '')
@@ -116,9 +124,44 @@ class Command:
             focus = 'edFind'
         ))
 
+    def set_fr_r(self):
+        if self.get_fr_prop('is_replace'):
+            f_ = self.get_fr_prop('find_d')
+            rg_ = self.get_fr_prop('op_regex_d')
+            items, items_ = self.get_items()
+            res = []
+            if len(items_) > 0:
+                for i in items_:
+                    if i['find'] == f_ and i['regex'] == rg_:
+                        res.append(i['replace'])
+
+            if len(res) == 1:
+                self.set_fr_prop('rep_d', res[0])
+            else:
+                self.h_menu = menu_proc(0, MENU_CREATE)
+                menu_proc(self.h_menu, MENU_CLEAR)
+                for j in res:
+                    menu_proc(self.h_menu, MENU_ADD, caption = j, command='module=cuda_find_replace_pairs;cmd=set_fr_r_index;info={};'.format(j))
+                menu_proc(self.h_menu, MENU_SHOW)
+
+    def set_fr_r_index(self, info = None):
+        self.set_fr_prop('rep_d', info)
+
     def on_state_findbar(self, ed_self, state, value):
         match state:
             case 'cmd':
                 match value:
                     case 'Rep' | 'RepAll' | 'RepStop' | 'RepGlobal':
                         self.add()
+            case 'is_rep':
+                match value:
+                    case _:
+                        self.set_fr_r()
+            case 'opt':
+                match value:
+                    case 'RegEx':
+                        self.set_fr_r()
+            case 'focus':
+                match value:
+                    case _:
+                        self.set_fr_r()
