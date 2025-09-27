@@ -8,3 +8,6 @@ initial
 2025.09.27
 [+] auto-add matching pair from plugin's db
 [*] small fixes
+
+2025.09.27
+[*] adapted under python 3.8

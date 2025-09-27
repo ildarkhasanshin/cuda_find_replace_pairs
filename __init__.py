@@ -148,20 +148,7 @@ class Command:
         self.set_fr_prop('rep_d', info)
 
     def on_state_findbar(self, ed_self, state, value):
-        match state:
-            case 'cmd':
-                match value:
-                    case 'Rep' | 'RepAll' | 'RepStop' | 'RepGlobal':
-                        self.add()
-            case 'is_rep':
-                match value:
-                    case _:
-                        self.set_fr_r()
-            case 'opt':
-                match value:
-                    case 'RegEx':
-                        self.set_fr_r()
-            case 'focus':
-                match value:
-                    case _:
-                        self.set_fr_r()
+        if state == 'cmd' and (value == 'Rep' or value == 'RepAll' value == or 'RepStop' value == or 'RepGlobal'):
+            self.add()
+        elif state == 'is_rep' or (state == 'opt' and value == 'RegEx') or state == 'focus':
+            self.set_fr_r()
