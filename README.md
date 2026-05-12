@@ -1,2 +1,4 @@
 # cuda_find_replace_pairs
-Simple plugin for add/get pairs of find/replace.
+Simple plugin automatically saves find/replace pairs.
+Next time plugin will automatically insert these values​into the find/replace fields.
+If there is more than one pair in plugin's database - will appear pop-up menu with choice.
